@@ -1,9 +1,10 @@
+const { rateLimit } = require("express-rate-limit");
 const { Message } = require("../models/message.model");
 const { SessionMiddleware } = require("../models/session.model");
 
 const router = require("express").Router();
 
-app.get("/api/messages", SessionMiddleware.requiresValidAuthExpress, async (req, res) => {
+router.get("/api/messages", SessionMiddleware.requiresValidAuthExpress, async (req, res) => {
     try {
         if (!req.query || !req.query.from) throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
 
@@ -17,12 +18,12 @@ app.get("/api/messages", SessionMiddleware.requiresValidAuthExpress, async (req,
     }
 });
 
-app.post("/api/message", rateLimit({
+router.post("/api/message", rateLimit({
     windowMs: 1000 * 15,
     max: 5,
     standardHeaders: true,
     legacyHeaders: false
-}), Middleware.requiresValidAuthExpress, async (req, res) => {
+}), SessionMiddleware.requiresValidAuthExpress, async (req, res) => {
     try {
         if (!req.body || !req.body.content || typeof req.body.content != "string") throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
 
