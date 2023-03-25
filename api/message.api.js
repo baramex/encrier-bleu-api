@@ -14,7 +14,7 @@ router.get("/messages", SessionMiddleware.requiresValidAuthExpress, async (req, 
         res.status(200).json(mes);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || { message: "Une erreur est survenue.", error: "UnknownError" });
+        res.status(400).json(error.message || { message: "Une erreur est survenue.", error: "UnknownError" });
     }
 });
 
@@ -33,7 +33,7 @@ router.post("/message", rateLimit({
         res.status(201).json(message);
     } catch (error) {
         console.error(error);
-        res.status(400).send(error.message || { message: "Une erreur est survenue.", error: "UnknownError" });
+        res.status(400).json(error.message || { message: "Une erreur est survenue.", error: "UnknownError" });
     }
 });
 

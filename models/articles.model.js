@@ -26,8 +26,11 @@ class Article {
         return articleModel.create({ title, description, content, link, category, keywords, creator, image_url, video_url, source_id, country, language, pubDate });
     }
 
-    static getByCategory(category) {
-        return articleModel.find({ category }, {}).sort({ date: -1 });
+    static getByCategory(categories, negcat) {
+        const query = {};
+        if (categories && categories.length > 0) query.$in = categories;
+        if (negcat && negcat.length > 0) query.$nin = negcat;
+        return articleModel.find({ category: query }, {}).sort({ date: -1 });
     }
 
     static getById(id) {
@@ -49,7 +52,7 @@ class Article {
         const article = articles.data?.results?.[0];
         if (!article) return;
 
-        const lastArticle = await articleModel.findOne({ category: category ? { $all: [category] } : { $nin: ["buisness"] } }, {}, { sort: { pubDate: -1 } });
+        const lastArticle = await articleModel.findOne({ category: category ? { $all: [category] } : { $nin: ["business"] } }, {}, { sort: { pubDate: -1 } });
 
         if (!lastArticle || new Date(article.pubDate).getTime() > lastArticle.pubDate.getTime()) {
             const { title, description, content, link, keywords, creator, video_url, image_url, source_id, category, country, language } = article;
@@ -60,15 +63,13 @@ class Article {
     static async update() {
         const categories = [undefined, "business"];
         for (const category of categories) {
-            await Article.pickupArticle(category);
+            await Article.pickupArticle(category).catch(console.error);
         }
     }
 }
 
-const update = scheduleJob("0 */12 * * *", () => {
+scheduleJob("0 */12 * * *", () => {
     Article.update().catch(console.error);
 });
-
-update.invoke();
 
 module.exports = { Article };

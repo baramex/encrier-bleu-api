@@ -6,10 +6,11 @@ const { app, io } = require("./server");
 const cookie = require("cookie");
 
 /* routes */
-app.use("/",
+app.use("/api",
     require("./api/user.api"),
     require("./api/authentification.api"),
     require("./api/message.api"),
+    require("./api/article.api")
 );
 
 io.on("connection", (socket) => {
