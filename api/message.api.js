@@ -4,7 +4,7 @@ const { SessionMiddleware } = require("../models/session.model");
 
 const router = require("express").Router();
 
-router.get("/api/messages", SessionMiddleware.requiresValidAuthExpress, async (req, res) => {
+router.get("/messages", SessionMiddleware.requiresValidAuthExpress, async (req, res) => {
     try {
         if (!req.query || !req.query.from) throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
 
@@ -18,7 +18,7 @@ router.get("/api/messages", SessionMiddleware.requiresValidAuthExpress, async (r
     }
 });
 
-router.post("/api/message", rateLimit({
+router.post("/message", rateLimit({
     windowMs: 1000 * 15,
     max: 5,
     standardHeaders: true,
