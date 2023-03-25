@@ -4,26 +4,26 @@ const { scheduleJob } = require("node-schedule");
 
 const articleSchema = new Schema({
     title: { type: String, required: true },
-    description: { type: String, required: true },
+    description: { type: String },
     content: { type: String, required: true },
-    category: { type: String, required: true },
-    url: { type: String, required: true },
-    image: { type: String },
-    publishedAt: { type: Date, required: true },
-    source: {
-        type: {
-            name: { type: String, required: true },
-            url: { type: String, required: true }
-        }, required: true, default: {}
-    },
+    link: { type: String, required: true },
+    category: { type: [String], required: true, default: [] },
+    keywords: { type: [String], default: [] },
+    creator: { type: [String], default: [] },
+    image_url: { type: String },
+    video_url: { type: String },
+    source_id: { type: String },
+    country: { type: [String], required: true, default: [] },
+    language: { type: [String], required: true, default: [] },
+    pubDate: { type: Date, required: true },
     date: { type: Date, default: Date.now, required: true }
 });
 
 const articleModel = model("Article", articleSchema, "articles");
 
 class Article {
-    static create(title, description, content, category, url, image, publishedAt, source) {
-        return new articleModel({ title, description, content, category, url, image, publishedAt, source }).save();
+    static create(title, description, content, link, category, keywords, country, language, pubDate, creator, image_url, video_url, source_id) {
+        return articleModel.create({ title, description, content, link, category, keywords, creator, image_url, video_url, source_id, country, language, pubDate });
     }
 
     static getByCategory(category) {
@@ -35,25 +35,25 @@ class Article {
     }
 
     static async pickupArticle(category) {
-        const articles = await axios.get("https://news-api14.p.rapidapi.com/top-headlines", {
+        const articles = await axios.get("https://newsdata2.p.rapidapi.com/news", {
             params: {
                 category,
-                lang: "fr"
+                language: "fr"
             },
             headers: {
                 "X-RapidAPI-Key": process.env.RAPIDAPI_KEY,
-                "X-RapidAPI-Host": "news-api14.p.rapidapi.com"
+                "X-RapidAPI-Host": "newsdata2.p.rapidapi.com"
             }
         });
 
-        const article = articles.data?.articles?.[0];
+        const article = articles.data?.results?.[0];
         if (!article) return;
 
-        const lastArticle = await articleModel.findOne({ category }, {}, { sort: { date: -1 } });
+        const lastArticle = await articleModel.findOne({ category: category ? { $all: [category] } : { $nin: ["buisness"] } }, {}, { sort: { pubDate: -1 } });
 
-        if (!lastArticle || new Date(article.publishedAt).getTime() > lastArticle.date.getTime()) {
-            const { title, description, content, url, image, publishedAt, source } = article;
-            return await Article.create(title, description, content, category, url, image, publishedAt, source);
+        if (!lastArticle || new Date(article.pubDate).getTime() > lastArticle.pubDate.getTime()) {
+            const { title, description, content, link, keywords, creator, video_url, image_url, source_id, category, country, language } = article;
+            return await Article.create(title, description, content, link, category, keywords, country, language, new Date(article.pubDate), creator, image_url, video_url, source_id);
         }
     }
 
