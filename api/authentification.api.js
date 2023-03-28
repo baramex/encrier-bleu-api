@@ -2,6 +2,7 @@ const { User } = require("../models/user.model");
 const { SessionMiddleware, Session } = require("../models/session.model");
 const { getClientIp } = require("request-ip");
 const { rateLimit } = require("express-rate-limit");
+const { CustomError } = require("../utils/errors");
 
 const router = require("express").Router();
 
@@ -24,14 +25,14 @@ router.post("/login", rateLimit({
     legacyHeaders: false
 }), SessionMiddleware.isValidAuthExpress, async (req, res) => {
     try {
-        if (!req.body) throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
-        if (req.isAuthed) throw new Error({ message: "Vous êtes déjà authentifié.", error: "AlreadyAuthenticated" });
+        if (!req.body) throw new CustomError({ message: "Requête invalide.", error: "InvalidRequest" });
+        if (req.isAuthed) throw new CustomError({ message: "Vous êtes déjà authentifié.", error: "AlreadyAuthenticated" });
 
         const { email, password } = req.body;
-        if (typeof email != "string" || typeof password != "string") throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
+        if (typeof email != "string" || typeof password != "string") throw new CustomError({ message: "Requête invalide.", error: "InvalidRequest" });
 
         const user = await User.check(email, password);
-        if (!user) throw new Error({ message: "Identifants incorrects.", error: "InvalidCredentials" });
+        if (!user) throw new CustomError({ message: "Identifants incorrects.", error: "InvalidCredentials" });
 
         let session = await Session.getSessionByUserId(user._id);
         const ip = getClientIp(req);
@@ -60,14 +61,14 @@ router.post("/login", rateLimit({
 router.post("/refresh", async (req, res) => {
     try {
         const refreshToken = req.cookies.refreshToken;
-        if (typeof refreshToken != "string") throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
+        if (typeof refreshToken != "string") throw new CustomError({ message: "Requête invalide.", error: "InvalidRequest" });
 
         let session = await Session.getSessionByRefreshToken(refreshToken);
 
         const user = session?.user;
         if (!session || typeof user != "object") {
             res.clearCookie("refreshToken");
-            throw new Error({ message: "Jeton de rafraîchissement invalide.", error: "InvalidRefreshToken" });
+            throw new CustomError({ message: "Jeton de rafraîchissement invalide.", error: "InvalidRefreshToken" });
         }
 
         const ip = getClientIp(req);

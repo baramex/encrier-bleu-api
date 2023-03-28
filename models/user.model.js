@@ -9,7 +9,7 @@ const PASSWORD_REGEX = /^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=
 
 const userSchema = new Schema({
     email: { type: String, trim: true, lowercase: true, required: true, validate: { validator: isEmail, message: "L'adresse email est invalide." } },
-    role: { type: Number, min: 0, max: Object.keys(ROLE_VALUES).length - 1, required: true },
+    role: { type: Number, min: 0, max: Object.keys(ROLE_VALUES).length - 1, get: v => ROLE_VALUES[v], required: true },
     username: { type: String, trim: true, required: true },
     password: { type: String, trim: true },
     date: { type: Date, default: Date.now, required: true }
@@ -17,20 +17,17 @@ const userSchema = new Schema({
 
 userSchema.pre("save", async function (next) {
     if (this.isModified("password")) {
-        if (!PASSWORD_REGEX.test(this.password)) throw new Error({ message: "Le mot de passe est invalide.", error: "InvalidPassword" });
+        if (!PASSWORD_REGEX.test(this.password)) throw new CustomError({ message: "Le mot de passe est invalide.", error: "InvalidPassword" });
         this.password = await hash(this.password, 10);
     }
     next();
-});
-userSchema.get("role", function () {
-    return ROLE_VALUES[this.role];
 });
 
 const UserModel = model("User", userSchema, "users");
 
 class User {
-    static create(password, email, role) {
-        return new UserModel({ password, email, role }).save();
+    static create(password, email, username, role) {
+        return new UserModel({ password, email, username, role }).save();
     }
 
     static hasPermission(user, ...permissions) {
@@ -57,7 +54,7 @@ class User {
     }
 
     static getUserFields(user) {
-        return { _id: user._id, email: user.email, role: user.role, date: user.date };
+        return { _id: user._id, email: user.email, role: user.role, username: user.username, date: user.date };
     }
 }
 
@@ -66,14 +63,14 @@ class UserMiddleware {
         return async (req, res, next) => {
             try {
                 const id = req.params.id;
-                if (!id || (id == "@me" ? false : !ObjectId.isValid(id))) throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
+                if (!id || (id == "@me" ? false : !ObjectId.isValid(id))) throw new CustomError({ message: "Requête invalide.", error: "InvalidRequest" });
 
                 if ((id == "@me" || req.user._id.equals(id)) ? false : !User.hasPermission(req.user, ...permissions)) throw new CustomError({ message: "Non autorisé.", error: "Unauthorized" }, 403);
 
                 if (id == "@me" || req.user._id.equals(id)) req.paramsUser = req.user;
                 else {
                     const user = await User.getUserById(id);
-                    if (!user) throw new Error({ message: "Utilisateur introuvable.", error: "UserNotFound" });
+                    if (!user) throw new CustomError({ message: "Utilisateur introuvable.", error: "UserNotFound" });
                     req.paramsUser = user;
                 }
 

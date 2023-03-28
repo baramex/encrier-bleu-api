@@ -1,6 +1,7 @@
 const { ObjectId } = require("mongodb");
 const { Schema, model } = require("mongoose");
 const { io } = require("../server");
+const { CustomError } = require("../utils/errors");
 
 const messageSchema = new Schema({
     author: { type: ObjectId, ref: "User", required: true },
@@ -24,8 +25,8 @@ class Message {
      * @param {ObjectId} profileId 
      * @param {String} content 
      */
-    static create(profileId, content) {
-        return new messageModel({ author: profileId, content }).save().populate("author", "username");
+    static async create(profileId, content) {
+        return (await new messageModel({ author: profileId, content }).save()).populate("author", "username");
     }
 
     /**
@@ -42,8 +43,8 @@ class Message {
      * @param {Number} number 
      */
     static getMessages(from, number) {
-        if (!from || isNaN(from) || from < 0) throw new Error("La valeur de départ doit être supérieure à 0.");
-        if (number > 50) throw new Error("Le nombre de message ne peut pas excéder 50.");
+        if (!from || isNaN(from) || from < 0) throw new CustomError({ message: "La valeur de départ doit être supérieure à 0.", error: "InvalidFrom" });
+        if (number > 50) throw new CustomError({ message: "Le nombre de message ne peut pas excéder 50.", error: "InvalidNumber" });
         return messageModel.find({}, {}, { populate: { path: "author", select: "username" } }).sort({ date: -1 }).skip(from).limit(number);
     }
 

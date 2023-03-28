@@ -1,12 +1,13 @@
 const { rateLimit } = require("express-rate-limit");
 const { Message } = require("../models/message.model");
 const { SessionMiddleware } = require("../models/session.model");
+const { CustomError } = require("../utils/errors");
 
 const router = require("express").Router();
 
 router.get("/messages", SessionMiddleware.requiresValidAuthExpress, async (req, res) => {
     try {
-        if (!req.query || !req.query.from) throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
+        if (!req.query || !req.query.from) throw new CustomError({ message: "Requête invalide.", error: "InvalidRequest" });
 
         const from = req.query.from;
         const mes = await Message.getMessages(from, 20);
@@ -25,7 +26,7 @@ router.post("/message", rateLimit({
     legacyHeaders: false
 }), SessionMiddleware.requiresValidAuthExpress, async (req, res) => {
     try {
-        if (!req.body || !req.body.content || typeof req.body.content != "string") throw new Error({ message: "Requête invalide.", error: "InvalidRequest" });
+        if (!req.body || !req.body.content || typeof req.body.content != "string") throw new CustomError({ message: "Requête invalide.", error: "InvalidRequest" });
 
         const content = req.body.content.trim();
         const message = await Message.create(req.user._id, content);
