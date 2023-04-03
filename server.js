@@ -15,6 +15,7 @@ const express = require("express");
 const app = express();
 
 /* middleware */
+app.use(express.static("public"));
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 const cookieParser = require('cookie-parser');
