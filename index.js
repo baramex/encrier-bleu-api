@@ -13,7 +13,7 @@ app.use("/api",
     require("./api/article.api")
 );
 
-app.use("*", (req, res) => {
+app.get("*", (req, res) => {
     res.sendFile("index.html", { root: __dirname + "/public" });
 });
 
