@@ -19,6 +19,8 @@ const articleSchema = new Schema({
     date: { type: Date, default: Date.now, required: true }
 });
 
+// TODO: image downloader: self hosting
+
 const articleModel = model("Article", articleSchema, "articles");
 
 class Article {

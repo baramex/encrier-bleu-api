@@ -13,6 +13,10 @@ app.use("/api",
     require("./api/article.api")
 );
 
+app.use("*", (req, res) => {
+    res.sendFile("index.html", { root: __dirname + "/public" });
+});
+
 io.on("connection", (socket) => {
     SessionMiddleware.checkValidAuth(cookie.parse(socket.handshake.headers.cookie)).then(result => {
         socket.user = result.user._id;
