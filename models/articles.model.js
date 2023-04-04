@@ -39,7 +39,7 @@ class Article {
         return articleModel.findById(id, {});
     }
 
-    static async pickupArticle(category) {
+    static async pickupArticle(category, number = 1) {
         const articles = await axios.get("https://newsdata2.p.rapidapi.com/news", {
             params: {
                 category,
@@ -51,27 +51,31 @@ class Article {
             }
         });
 
-        const article = articles.data?.results?.[0];
-        if (!article) return;
+        const resArticles = articles.data?.results?.slice(0, number)?.reverse();
+        if (!resArticles || resArticles.length === 0) return;
 
-        const lastArticle = await articleModel.findOne({ category: category ? { $all: [category] } : { $nin: ["business"] } }, {}, { sort: { pubDate: -1 } });
+        for (const article of resArticles) {
+            if (!article || !article.title) continue;
 
-        if (!lastArticle || new Date(article.pubDate).getTime() > lastArticle.pubDate.getTime()) {
-            const { title, description, content, link, keywords, creator, video_url, image_url, source_id, category, country, language } = article;
-            return await Article.create(title, description, content, link, category, keywords, country, language, new Date(article.pubDate), creator, image_url, video_url, source_id);
+            const exists = await articleModel.exists({ category: category ? { $all: [category] } : { $nin: ["business"] }, title: article.title });
+
+            if (!exists) {
+                const { title, description, content, link, keywords, creator, video_url, image_url, source_id, category, country, language } = article;
+                await Article.create(title, description, content, link, category, keywords, country, language, new Date(article.pubDate), creator, image_url, video_url, source_id);
+            }
         }
     }
 
     static async update() {
         const categories = [undefined, "business"];
         for (const category of categories) {
-            await Article.pickupArticle(category).catch(console.error);
+            await Article.pickupArticle(category, 10).catch(console.error);
         }
     }
 }
 
 scheduleJob("0 */12 * * *", () => {
     Article.update().catch(console.error);
-});
+}).invoke();
 
 module.exports = { Article };
