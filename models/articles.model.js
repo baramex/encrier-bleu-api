@@ -69,13 +69,13 @@ class Article {
     static async update() {
         const categories = [undefined, "business"];
         for (const category of categories) {
-            await Article.pickupArticle(category, 10).catch(console.error);
+            await Article.pickupArticle(category).catch(console.error);
         }
     }
 }
 
 scheduleJob("0 */12 * * *", () => {
     Article.update().catch(console.error);
-}).invoke();
+});
 
 module.exports = { Article };
