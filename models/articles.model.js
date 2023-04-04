@@ -32,7 +32,7 @@ class Article {
         const query = {};
         if (categories && categories.length > 0) query.$in = categories;
         if (negcat && negcat.length > 0) query.$nin = negcat;
-        return articleModel.find({ category: query }, {}).sort({ date: -1 });
+        return articleModel.find({ category: query }, {}, { sort: { pubDate: -1 } });
     }
 
     static getById(id) {
