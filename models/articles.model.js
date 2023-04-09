@@ -55,7 +55,7 @@ class Article {
         if (!resArticles || resArticles.length === 0) return;
 
         for (const article of resArticles) {
-            if (!article || !article.title) continue;
+            if (!article || !article.title || !article.image_url) continue;
 
             const exists = await articleModel.exists({ category: category ? { $all: [category] } : { $nin: ["business"] }, title: article.title });
 
@@ -69,7 +69,7 @@ class Article {
     static async update() {
         const categories = [undefined, "business"];
         for (const category of categories) {
-            await Article.pickupArticle(category).catch(console.error);
+            await Article.pickupArticle(category, 3).catch(console.error);
         }
     }
 }
