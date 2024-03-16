@@ -87,7 +87,7 @@ class Article {
     }
 }
 
-scheduleJob("0 * * * *", () => {
+scheduleJob("0 */4 * * *", () => {
     Article.update().catch(console.error);
 }).invoke();
 
