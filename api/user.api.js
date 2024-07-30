@@ -48,7 +48,10 @@ router.patch("/user/:id", rateLimit({
     windowMs: 1000 * 30,
     max: 10,
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    keyGenerator: (req,res) => {
+        return req.headers['cf-connecting-ip'];
+    }
 }), SessionMiddleware.requiresValidAuthExpress, UserMiddleware.parseParamsUser(PERMISSIONS.MANAGE_USERS), async (req, res) => {
     try {
         if (!req.body) throw new CustomError({ message: "Requête invalide.", error: "InvalidRequest" });
