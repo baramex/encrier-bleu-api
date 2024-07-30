@@ -22,7 +22,10 @@ router.post("/login", rateLimit({
     windowMs: 1000 * 60,
     max: 5,
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    keyGenerator: (req,res) => {
+        return req.headers['cf-connecting-ip'];
+    }
 }), SessionMiddleware.isValidAuthExpress, async (req, res) => {
     try {
         if (!req.body) throw new CustomError({ message: "Requête invalide.", error: "InvalidRequest" });
